@@ -60,7 +60,7 @@ const loggedInUser = await User.findById(user._id).select(
     const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
     };
 
     res.status(200).cookie("refreshToken", refreshToken, options).json(
@@ -91,7 +91,7 @@ export const logoutUser=asyncHandler(async(req,res)=>{
     const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
   };
 
   res
@@ -124,7 +124,7 @@ export const refreshAccessToken =asyncHandler(async(req,res)=>{
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
   };
   res.status(200)
   .cookie("refreshToken", refreshToken, options)
@@ -225,7 +225,7 @@ export const resetPassword =asyncHandler(async(req,res)=>{
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
   };
 
   res
@@ -354,3 +354,4 @@ export const downloadResume = asyncHandler(async (req, res) => {
 
   res.send(resumeBuffer);
 });
+
