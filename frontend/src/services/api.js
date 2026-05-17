@@ -1,12 +1,10 @@
 ﻿import axios from "axios";
 import { clearCredentials, setCredentials } from "../redux/features/authSlice.js";
 import { store } from "../redux/store.js";
-console.log(import.meta.VITE_API_URL);
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
   withCredentials: true,
 });
-console.log("Base URL used:", api.defaults.baseURL);
 
 
 api.interceptors.request.use((config) => {
