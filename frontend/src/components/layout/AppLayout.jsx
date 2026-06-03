@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../services/api.js";
@@ -47,6 +47,16 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || "light");
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  };
 
   const handleLogout = async () => {
     try {
@@ -68,7 +78,10 @@ const AppLayout = () => {
             <h1 className="mt-3 text-2xl font-black leading-tight text-slate-950">Tracker + Referrals</h1>
           </div>
           <NavItems />
-          <div className="mt-8 rounded-3xl border border-amber-200/70 bg-amber-100/80 p-4 text-sm text-amber-950 shadow-inner">
+          <button type="button" onClick={toggleTheme} className="theme-toggle mt-6">
+            {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          </button>
+          <div className="mt-4 rounded-3xl border border-amber-200/70 bg-amber-100/80 p-4 text-sm text-amber-950 shadow-inner">
             <p className="font-black">Signed in</p>
             <p className="mt-1 truncate">{user?.email}</p>
           </div>
@@ -99,6 +112,9 @@ const AppLayout = () => {
             {mobileOpen && (
               <div className="mt-4 border-t border-slate-100 pt-4">
                 <NavItems onNavigate={() => setMobileOpen(false)} />
+                <button type="button" onClick={toggleTheme} className="theme-toggle mt-3">
+                  {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                </button>
                 <button
                   type="button"
                   onClick={handleLogout}
