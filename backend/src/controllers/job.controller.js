@@ -1,7 +1,42 @@
-﻿import ApiError from "../utils/ApiError.js";
+import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import Job from "../models/job.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
+
+const normalizeJobType = (job = {}) => {
+  const text = [job.title, job.location, ...(job.tags || [])]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (text.includes("remote")) return "remote";
+  if (text.includes("intern")) return "internship";
+  if (text.includes("contract") || text.includes("freelance")) return "contract";
+  if (text.includes("part time") || text.includes("part-time")) return "part-time";
+
+  return "full-time";
+};
+
+const stripHtml = (value = "") =>
+  value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const mapArbeitnowJob = (job) => ({
+  source: "arbeitnow",
+  externalId: String(job.slug || job.url || job.title || "external-job"),
+  companyName: job.company_name || "Unknown company",
+  jobTitle: job.title || "Untitled role",
+  jobLink: job.url || "",
+  location: job.location || "Not specified",
+  jobType: normalizeJobType(job),
+  tags: Array.isArray(job.tags) ? job.tags.slice(0, 5) : [],
+  description: stripHtml(job.description || "").slice(0, 240),
+  postedAt: job.created_at ? new Date(job.created_at * 1000).toISOString() : null,
+});
 
 export const createJob = asyncHandler(async (req, res) => {
   const {
@@ -34,6 +69,101 @@ export const createJob = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json(new ApiResponse(201, "Job created successfully", job));
+});
+
+export const searchExternalJobs = asyncHandler(async (req, res) => {
+  const { query = "", location = "", page = 1 } = req.query;
+  const pageNumber = Math.max(Number(page) || 1, 1);
+  const apiUrl = `https://www.arbeitnow.com/api/job-board-api?page=${pageNumber}`;
+
+  let response;
+  try {
+    response = await fetch(apiUrl);
+  } catch (error) {
+    throw new ApiError(502, "External job search service is not reachable");
+  }
+
+  if (!response.ok) {
+    throw new ApiError(502, "External job search service failed");
+  }
+
+  const payload = await response.json();
+  const allJobs = Array.isArray(payload.data) ? payload.data : [];
+  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedLocation = location.trim().toLowerCase();
+
+  const filteredJobs = allJobs
+    .filter((job) => {
+      const searchableText = [
+        job.title,
+        job.company_name,
+        job.location,
+        ...(job.tags || []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesQuery = normalizedQuery
+        ? searchableText.includes(normalizedQuery)
+        : true;
+      const matchesLocation = normalizedLocation
+        ? String(job.location || "").toLowerCase().includes(normalizedLocation)
+        : true;
+
+      return matchesQuery && matchesLocation;
+    })
+    .slice(0, 20)
+    .map(mapArbeitnowJob);
+
+  res.status(200).json(
+    new ApiResponse(200, "External jobs fetched successfully", {
+      jobs: filteredJobs,
+      source: "arbeitnow",
+      page: pageNumber,
+      total: filteredJobs.length,
+    })
+  );
+});
+
+export const saveExternalJob = asyncHandler(async (req, res) => {
+  const {
+    companyName,
+    jobTitle,
+    jobLink,
+    location,
+    jobType = "full-time",
+    notes,
+    isBookmarked = false,
+  } = req.body;
+
+  if (!companyName || !jobTitle) {
+    throw new ApiError(400, "Company name and job title are required");
+  }
+
+  if (jobLink) {
+    const existingJob = await Job.findOne({ user: req.user._id, jobLink }).select("-__v");
+
+    if (existingJob) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, "Job already saved in tracker", existingJob));
+    }
+  }
+
+  const job = await Job.create({
+    user: req.user._id,
+    companyName,
+    jobTitle,
+    jobLink,
+    location,
+    jobType,
+    status: "saved",
+    notes: notes || "Saved from external job search",
+    isBookmarked,
+  });
+
+  res.status(201).json(new ApiResponse(201, "External job saved successfully", job));
 });
 
 export const getMyJobs = asyncHandler(async (req, res) => {
