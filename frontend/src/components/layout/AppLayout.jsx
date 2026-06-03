@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../services/api.js";
@@ -22,8 +22,8 @@ const NavItems = ({ onNavigate }) => (
         className={({ isActive }) =>
           `group flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-black transition duration-200 ${
             isActive
-              ? "bg-emerald-900 text-white shadow-lg shadow-emerald-900/25"
-              : "text-slate-700 hover:-translate-y-0.5 hover:bg-emerald-50 hover:text-emerald-900"
+              ? "bg-emerald-900 text-white shadow-lg shadow-emerald-900/20"
+              : "text-slate-600 hover:-translate-y-0.5 hover:bg-emerald-50 hover:text-emerald-900"
           }`
         }
       >
@@ -32,7 +32,7 @@ const NavItems = ({ onNavigate }) => (
             <span>{item.label}</span>
             <span
               className={`h-2 w-2 rounded-full transition ${
-                isActive ? "bg-white" : "bg-emerald-200 opacity-0 group-hover:opacity-100"
+                isActive ? "bg-white" : "bg-emerald-300 opacity-0 group-hover:opacity-100"
               }`}
             />
           </>
@@ -71,18 +71,19 @@ const AppLayout = () => {
 
   return (
     <div className="min-h-screen px-4 py-5 text-slate-900 md:px-8">
-      <div className="mx-auto flex max-w-7xl gap-5">
-        <aside className="hidden w-72 shrink-0 rounded-[2rem] border border-emerald-950/10 bg-white/75 p-5 shadow-xl shadow-emerald-950/5 backdrop-blur md:block">
-          <div className="mb-8 rounded-[1.5rem] bg-gradient-to-br from-emerald-50 to-amber-50 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-emerald-700">JobFlow</p>
+      <div className="mx-auto flex max-w-7xl gap-6">
+        <aside className="hidden w-72 shrink-0 rounded-[2rem] border border-slate-200/70 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur md:block">
+          <div className="mb-8 rounded-[1.5rem] border border-slate-200/70 bg-white/70 p-5 shadow-inner shadow-slate-900/5">
+            <div className="mb-5 h-10 w-10 rounded-2xl bg-emerald-900" />
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-700">JobFlow</p>
             <h1 className="mt-3 text-2xl font-black leading-tight text-slate-950">Tracker + Referrals</h1>
           </div>
           <NavItems />
           <button type="button" onClick={toggleTheme} className="theme-toggle mt-6">
             {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           </button>
-          <div className="mt-4 rounded-3xl border border-amber-200/70 bg-amber-100/80 p-4 text-sm text-amber-950 shadow-inner">
-            <p className="font-black">Signed in</p>
+          <div className="mt-4 rounded-3xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-600 shadow-inner shadow-slate-900/5">
+            <p className="font-black text-slate-800">Signed in</p>
             <p className="mt-1 truncate">{user?.email}</p>
           </div>
           <button
